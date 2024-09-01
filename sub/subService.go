@@ -49,10 +49,6 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
         return nil, "", common.NewError("No inbounds found with ", subId)
     }
 
-    s.datepicker, err = s.settingService.GetDatepicker()
-    if err != nil {
-        s.datepicker = "gregorian"
-    }
     for _, inbound := range inbounds {
         clients, err := s.inboundService.GetClients(inbound)
         if err != nil {
@@ -61,21 +57,13 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
         if clients == nil {
             continue
         }
-        if len(inbound.Listen) > 0 && inbound.Listen[0] == '@' {
-            listen, port, streamSettings, err := s.getFallbackMaster(inbound.Listen, inbound.StreamSettings)
-            if err == nil {
-                inbound.Listen = listen
-                inbound.Port = port
-                inbound.StreamSettings = streamSettings
-            }
-        }
         for _, client := range clients {
             if client.Enable && client.SubID == subId {
                 originalLink := s.getLink(inbound, client.Email)
                 result = append(result, originalLink) // Добавляем оригинальную ссылку
 
-                modifiedLink := s.getLinkWithModifiedHost(inbound, client.Email, "germ.realityvpn.ru")
-                result = append(result, modifiedLink) // Добавляем модифицированную ссылку
+                modifiedLink := s.getLinkWithModifiedHost(originalLink, "germ.realityvpn.ru")
+                result = append(result, modifiedLink) // Добавляем модифицированную ссылку с изменённым хостом
                 clientTraffics = append(clientTraffics, s.getClientTraffics(inbound.ClientStats, client.Email))
             }
         }
